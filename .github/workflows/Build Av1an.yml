@@ -13,8 +13,13 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout your repository
         uses: actions/checkout@v4
+
+      - name: Clone official Av1an repository
+        run: |
+          # Clones the source code into the current runner workspace folder
+          git clone https://github.com .
 
       - name: Install System Dependencies (Windows)
         run: |
@@ -27,7 +32,6 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build Av1an (Windows)
-        # Bypasses default feature flags to isolate and compile only using ffmpeg
         run: cargo build --release --no-default-features --features "ffmpeg"
 
       - name: Upload Artifacts
