@@ -3,6 +3,7 @@ name: Build Av1an (Windows Only)
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ] # Triggers the workflow when you push a version tag like v1.0.0
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -25,7 +26,6 @@ jobs:
       - name: Install System Dependencies (Windows)
         run: |
           choco install ffmpeg -y
-          # Use winget to pull down and silently configure the true VapourSynth installer
           winget install VapourSynth.VapourSynth --silent --accept-package-agreements --accept-source-agreements
 
       - name: Setup Rust Toolchain
@@ -37,13 +37,13 @@ jobs:
       - name: Build Av1an (Windows)
         working-directory: ./src
         env:
-          # Point the compiler to the location where winget drops the SDK components
           VAPOURSYNTH_LIB_DIR: C:\Program Files\VapourSynth\sdk\lib64
         run: cargo build --release
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Create Release and Upload Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
         with:
-          name: av1an-windows
-          path: src/target/release/av1an.exe
-          if-no-files-found: error
+          files: src/target/release/av1an.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
