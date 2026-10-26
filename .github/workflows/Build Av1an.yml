@@ -24,8 +24,8 @@ jobs:
 
       - name: Install System Dependencies (Windows)
         run: |
-          # Use Chocolatey to safely install both ffmpeg and vapoursynth natively
-          choco install ffmpeg vapoursynth -y
+          # Install only ffmpeg, which works perfectly out-of-the-box on Chocolatey
+          choco install ffmpeg -y
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -35,10 +35,8 @@ jobs:
 
       - name: Build Av1an (Windows)
         working-directory: ./src
-        env:
-          # Chocolatey installs VapourSynth directly to the standard Program Files path
-          VAPOURSYNTH_LIB_DIR: C:\Program Files\VapourSynth\sdk\lib64
-        run: cargo build --release
+        # Targeting the sub-package '-p av1an' isolates the compilation feature switches cleanly
+        run: cargo build --release -p av1an --no-default-features --features "ffmpeg"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
