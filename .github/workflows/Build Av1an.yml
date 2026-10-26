@@ -22,22 +22,22 @@ jobs:
 
       - name: Install System Dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg vapoursynth libvapoursynth-dev
+          sudo apt-get install -y --no-install-recommends ffmpeg pkg-config libvapoursynth-dev
 
       - name: Install System Dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           brew update
-          brew install ffmpeg vapoursynth
+          brew install ffmpeg vapoursynth pkg-config
 
       - name: Install System Dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           choco install ffmpeg
-          # Note: Vapoursynth on Windows actions runners usually requires manual 
-          # setup if your specific build profile hooks deeply into it.
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -45,8 +45,15 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Build Av1an (Release)
+      - name: Build Av1an (Linux & macOS)
+        if: matrix.os != 'windows-latest'
+        env:
+          PKG_CONFIG_PATH: "/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig"
         run: cargo build --release
+
+      - name: Build Av1an (Windows)
+        if: matrix.os == 'windows-latest'
+        run: cargo build --release --no-default-features --features "ffmpeg"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
