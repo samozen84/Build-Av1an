@@ -24,8 +24,9 @@ jobs:
 
       - name: Install System Dependencies (Windows)
         run: |
-          # Install only ffmpeg, which works perfectly out-of-the-box on Chocolatey
           choco install ffmpeg -y
+          # Use winget to pull down and silently configure the true VapourSynth installer
+          winget install VapourSynth.VapourSynth --silent --accept-package-agreements --accept-source-agreements
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -35,8 +36,10 @@ jobs:
 
       - name: Build Av1an (Windows)
         working-directory: ./src
-        # Targeting the sub-package '-p av1an' isolates the compilation feature switches cleanly
-        run: cargo build --release -p av1an --no-default-features --features "ffmpeg"
+        env:
+          # Point the compiler to the location where winget drops the SDK components
+          VAPOURSYNTH_LIB_DIR: C:\Program Files\VapourSynth\sdk\lib64
+        run: cargo build --release
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
