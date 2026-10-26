@@ -25,7 +25,10 @@ jobs:
       - name: Install System Dependencies (Windows)
         run: |
           choco install ffmpeg -y
-
+          # Download official VapourSynth installer silently to provide the SDK components natively
+          powershell -Command "Invoke-WebRequest -Uri 'https://github.com' -OutFile 'vs_installer.exe'"
+          ./vs_installer.exe /S
+          
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -34,7 +37,10 @@ jobs:
 
       - name: Build Av1an (Windows)
         working-directory: ./src
-        run: cargo build --release --no-default-features --features "ffmpeg"
+        env:
+          # Point the compiler directly to the newly installed native Windows system directory
+          VAPOURSYNTH_LIB_DIR: C:\Program Files\VapourSynth\sdk\lib64
+        run: cargo build --release
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
