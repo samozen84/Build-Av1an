@@ -17,9 +17,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Clone official Av1an repository
+        # Clones into a clean 'src' subdirectory to avoid conflicts
         run: |
-          # Clones the source code into the current runner workspace folder
-          git clone https://github.com .
+          git clone https://github.com src
 
       - name: Install System Dependencies (Windows)
         run: |
@@ -32,11 +32,13 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build Av1an (Windows)
+        # Changes directory to 'src' before initiating compile sequence
+        working-directory: ./src
         run: cargo build --release --no-default-features --features "ffmpeg"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: av1an-windows
-          path: target/release/av1an.exe
+          path: src/target/release/av1an.exe
           if-no-files-found: error
