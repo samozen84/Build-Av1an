@@ -1,0 +1,58 @@
+name: Build Av1an
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg vapoursynth libvapoursynth-dev
+
+      - name: Install System Dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install ffmpeg vapoursynth
+
+      - name: Install System Dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install ffmpeg
+          # Note: Vapoursynth on Windows actions runners usually requires manual 
+          # setup if your specific build profile hooks deeply into it.
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Av1an (Release)
+        run: cargo build --release
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: av1an-${{ matrix.os }}
+          path: |
+            target/release/av1an
+            target/release/av1an.exe
+          if-no-files-found: ignore
