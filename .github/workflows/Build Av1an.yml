@@ -26,6 +26,9 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
+          # Add the multimedia PPA to secure the missing libvapoursynth-dev package
+          sudo add-apt-repository ppa:savoury1/multimedia -y
+          sudo apt-get update
           sudo apt-get install -y --no-install-recommends ffmpeg pkg-config libvapoursynth-dev
 
       - name: Install System Dependencies (macOS)
@@ -38,6 +41,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           choco install ffmpeg
+          # Fetch official portable components to extract the required linking SDK libraries
+          curl -L -o vapoursynth.zip https://github.com
+          7z x vapoursynth.zip -ovapoursynth
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -45,15 +51,21 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Build Av1an (Linux & macOS)
-        if: matrix.os != 'windows-latest'
+      - name: Build Av1an (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo build --release
+
+      - name: Build Av1an (macOS)
+        if: matrix.os == 'macos-latest'
         env:
-          PKG_CONFIG_PATH: "/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig"
+          PKG_CONFIG_PATH: "/opt/homebrew/lib/pkgconfig"
         run: cargo build --release
 
       - name: Build Av1an (Windows)
         if: matrix.os == 'windows-latest'
-        run: cargo build --release --no-default-features --features "ffmpeg"
+        env:
+          VAPOURSYNTH_LIB_DIR: ${{ github.workspace }}/vapoursynth/sdk/lib64
+        run: cargo build --release
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
