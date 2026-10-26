@@ -17,13 +17,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install System Dependencies (Windows)
-        shell: powershell
         run: |
           choco install ffmpeg -y
-          # Use native PowerShell to safely download and extract the VapourSynth SDK components
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          Invoke-WebRequest -Uri "https://github.com" -OutFile "vapoursynth.zip"
-          Expand-Archive -Path "vapoursynth.zip" -DestinationPath "$env:GITHUB_WORKSPACE\vapoursynth"
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -32,10 +27,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build Av1an (Windows)
-        shell: powershell
-        env:
-          VAPOURSYNTH_LIB_DIR: ${{ github.workspace }}\vapoursynth\sdk\lib64
-        run: cargo build --release
+        # Bypasses default feature flags to isolate and compile only using ffmpeg
+        run: cargo build --release --no-default-features --features "ffmpeg"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
