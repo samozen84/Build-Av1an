@@ -3,7 +3,7 @@ name: Build Av1an (Windows Only)
 on:
   push:
     branches: [ main, master ]
-    tags: [ 'v*' ] # Triggers the workflow when you push a version tag like v1.0.0
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -40,6 +40,15 @@ jobs:
           VAPOURSYNTH_LIB_DIR: C:\Program Files\VapourSynth\sdk\lib64
         run: cargo build --release
 
+      # Fix: This step guarantees you will ALWAYS have an exe artifact on the summary dashboard
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: av1an-windows
+          path: src/target/release/av1an.exe
+          if-no-files-found: error
+
+      # This step handles creating an official GitHub Release only when a tag is pushed
       - name: Create Release and Upload Asset
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
